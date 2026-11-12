@@ -1,11 +1,21 @@
-* Boost Charge Controller: chave NMOS + diodo (sem enable; para por falta de CLK)
+* Boost Charge Controller (v2): chave NMOS no CI + diodo Schottky EXTERNO
+* (sem enable; para por falta de CLK)
 * Modo descontinuo (DCM) com f e t_on fixos (vindos do oscilador):
 *    R_in = 2 L / (t_on^2 f) * (1 - Vin/Vout)  -> a celula "ve" um resistor fixo ~ R_mpp
-*    I_pk = V_in t_on / L      -> "corrente de referencia fixa"
-* Pinos: lbst clk vstor   (VIN_DC so chega ao CI pelo indutor externo)
-.subckt boost lbst clk vstor
+*    I_pk = V_in t_on / L
+* v2: o diodo integrado p+/n-well (~0.77 V, PNP parasita para o substrato) foi
+*     trocado por um Schottky externo entre LBST e a bateria.
+* Pinos do bloco: lbst clk
+.subckt boost lbst clk
 * chave: NMOS 5 V, W total = 200 um
 XSW lbst clk 0 0 sky130_fd_pr__nfet_g5v0d10v5 W=20 L=0.5 nf=1 m=10
-* retificador: diodo p+/n-well (anodo LBST, catodo VSTOR) - bloqueia retorno da bateria
-DR lbst vstor sky130_fd_pr__diode_pd2nw_05v5 area=1e4 pj=400
+.ends
+
+* Diodo Schottky externo de baixa fuga (modelo generico):
+*   Vf ~ 0.37 V @ 1.5 mA ; fuga reversa ~ IS = 2 nA (a 27 C)
+*   Ao escolher o componente real, verifique a corrente reversa a 4.2 V: ela
+*   descarrega a bateria de volta para a celula a noite toda.
+.subckt schottky_ext a k
+D1 a k dschottky
+.model dschottky d (is=2n n=1.05 rs=2 cjo=10p m=0.5 vj=0.4 bv=30 ibv=1u)
 .ends

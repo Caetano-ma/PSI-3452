@@ -1,15 +1,15 @@
-* Oscilador: formas de onda internas (VDD = 2.2 V) e corte de VDD
+* Oscilador: formas de onda internas (VDD = 1.82 V) e corte de VDD
 .lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
 .include "../../blocos/oscilador.spice"
-VDD vdd 0 PWL(0 2.2 70u 2.2 75u 0 100u 0)
+VDD vdd 0 PWL(0 1.82 150u 1.82 155u 0 200u 0)
 X1 vdd clk oscilador
 XSW 0 clk 0 0 sky130_fd_pr__nfet_g5v0d10v5 W=20 L=0.5 nf=1 m=10
-.ic v(x1.r1)=0 v(x1.r2)=2.2 v(x1.r3)=0 v(x1.r4)=2.2 v(x1.r5)=0
+.ic v(x1.r1)=0 v(x1.r2)=1.82 v(x1.r3)=0 v(x1.r4)=1.82 v(x1.r5)=0
 .control
 set wr_singlescale
 set wr_vecnames
 option numdgt=7
-tran 2n 100u 0 2n uic
+tran 2n 200u 0 2n uic
 let idd = -i(VDD)
 wrdata ../dados/osc_ondas.txt v(vdd) v(x1.r1) v(x1.r2) v(x1.r3) v(x1.r4) v(x1.r5) v(x1.s2) v(x1.d3) v(x1.pn) v(clk) idd
 quit

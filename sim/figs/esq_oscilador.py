@@ -3,8 +3,8 @@ from util import *
 from schemdraw import logic
 
 d = desenho()
-rot(d, (-1.5, 3.4), 'Oscilador: anel current-starved + detector de borda (pulso t_on) + buffers', halign='left', fs=12)
-rot(d, (-1.5, 2.8), 'Tudo alimentado por VDD (≈ 2,2 V, do Cold-Start), transistores de 5 V.  Sem VDD, todos os nós ficam em 0 V → CLK = 0.',
+rot(d, (-1.5, 3.4), 'Oscilador (v2): anel current-starved + detector de borda (pulso t_on) + buffers', halign='left', fs=12)
+rot(d, (-1.5, 2.8), 'Tudo alimentado por VDD (≈ 1,8 V, do Cold-Start), transistores de 5 V.  Sem VDD, todos os nós ficam em 0 V → CLK = 0.',
     halign='left', fs=8, cor='#555')
 
 AZ = '#1f5fa8'
@@ -82,9 +82,9 @@ d.add(elm.Dot(radius=0.11, open=True).theta(0).at((g.out.x + 1.0, yb))
       .label('CLK → gate da chave do Boost', loc='right', fontsize=FS, color='#d1495b'))
 
 caixa(d, -1.2, 2.3, x + 0.8, -2.2)
-rot(d, (-1.0, -2.0), 'anel: define f ≈ 100 kHz', fs=8, cor='#777', halign='left')
+rot(d, (-1.0, -2.0), 'anel: define f ≈ 53 kHz', fs=8, cor='#777', halign='left')
 caixa(d, -1.2, -2.35, xx + 0.3, -7.3)
-rot(d, (xx + 0.1, -7.05), 'atraso: define t_on ≈ 530 ns', fs=8, cor='#777', halign='right')
+rot(d, (xx + 0.1, -7.05), 'atraso: define t_on ≈ 750 ns', fs=8, cor='#777', halign='right')
 
 # ---------------- detalhe: inversor current-starved ----------------
 yi = -9.0
@@ -94,7 +94,7 @@ rot(d, (x0, yi + 0.1), 'VDD', fs=8)
 P(d, x0, yi - 0.2, gate='left', nome='P 1/1', lado='right')
 w(d, (x0, yi - 1.7), (x0, yi - 2.2))
 N(d, x0, yi - 2.2, gate='left', nome='N 1/1', lado='right')
-N(d, x0, yi - 3.7, gate='left', nome='nativo 10/0,9', nativo=True, lado='right')
+N(d, x0, yi - 3.7, gate='left', nome='nativo 10/2 (anel) ou 10/0,9 (atraso)', nativo=True, lado='right')
 w(d, (x0 - 1.37, yi - 4.45), (x0 - 1.37, yi - 5.2), (x0, yi - 5.2)); gnd(d, (x0, yi - 5.2))
 w(d, (x0 - 1.37, yi - 0.95), (x0 - 1.8, yi - 0.95), (x0 - 1.8, yi - 2.95), (x0 - 1.37, yi - 2.95))
 dot(d, (x0 - 1.8, yi - 1.95), 'a', loc='left')
@@ -104,10 +104,12 @@ notas = [
     'O NMOS nativo com Vgs = 0 limita a corrente de descida a ~160 nA, sem precisar de circuito de bias.',
     'Isso fixa o atraso de cada estágio (t ≈ C·VDD / 2I) e, principalmente, limita a corrente de',
     'curto-circuito (crowbar) — que domina o consumo quando as bordas são lentas (µs).',
-    'Resultado: 8 µW (inversores comuns) → 1,2 µW (current-starved), já incluindo o gate da chave.',
+    'Resultado (com o gate da chave): 8 µW com inversores comuns → 1,2 µW (v1: VDD 2,2 V, 101 kHz)',
+    '   → 0,22 µW (v2: VDD 1,8 V e nativo do anel com L = 2 µm: f cai à metade e o crowbar também).',
     '',
     'Pulso: CLK = s2 AND (s2 atrasado e invertido) → um pulso de largura t_on a cada ciclo do anel.',
-    'Cr = 0,26 pF (5×)   Cd = 0,03 pF (3×)   NAND 2/0,5   buffers XB1–XB3: 2/4, 6/12, 20/40 µm (N/P), L = 0,5 µm',
+    'Cr = 0,08 pF (5×)   Cd = 0,042 pF (3×)   nativo do anel 10/2 µm, da cadeia de atraso 10/0,9 µm',
+    'NAND 2/0,5   buffers XB1–XB3: 2/4, 6/12, 20/40 µm (N/P), L = 0,5 µm',
 ]
 for i, t in enumerate(notas):
     rot(d, (6.5, yi - 0.3 - 0.45 * i), t, halign='left', fs=8, cor='#333')

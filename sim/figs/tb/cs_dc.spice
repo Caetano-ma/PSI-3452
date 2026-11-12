@@ -1,12 +1,13 @@
-* Cold-Start: regulacao de linha, carga e temperatura (estado 0-0)
+* Cold-Start: regulacao de linha, carga e temperatura (estado 0-0, com luz: VIN_DC = 0,6 V)
 .lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
 .include "../../blocos/coldstart.spice"
 VBAT vbat 0 3.7
 VTRG trigger 0 0
+VIN vin_dc 0 0.6
 BL ctrl_low 0 V = v(vbat)
 BH ctrl_high 0 V = v(vbat)
-X1 vbat trigger ctrl_low ctrl_high vdd coldstart
-ILOAD vdd 0 2u
+X1 vbat trigger ctrl_low ctrl_high vin_dc vdd coldstart
+ILOAD vdd 0 0.15u
 .control
 set wr_singlescale
 set wr_vecnames
@@ -18,6 +19,9 @@ dc ILOAD 0.1u 20u 0.1u
 wrdata ../dados/cs_carga.txt v(vdd)
 dc temp -20 85 1
 wrdata ../dados/cs_temp.txt v(vdd)
+dc VIN 0 0.8 0.005
+let ib = -i(VBAT)
+wrdata ../dados/cs_luz.txt v(vdd) v(x1.dk) ib
 quit
 .endc
 .end

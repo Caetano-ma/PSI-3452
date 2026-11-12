@@ -1,0 +1,30 @@
+* >>> VERSAO 1 (congelada para comparacao; a versao atual fica em sim/blocos/) <<<
+* Comparador continuo de ~10 nA: OTA de 5 transistores com par PMOS + 2o estagio
+* (entrada perto do GND) + Schmitt trigger. Alimentado por VBAT, tudo 5 V.
+* out = 0 V quando inp < inn   (logo out e "ativo-baixo" para inp<inn)
+.subckt comp vbat inp inn out
+* bias: NMOS nativo com Vgs=0 -> ~12 nA, independe de VBAT (saturado)
+XMB  nb 0 0 0      sky130_fd_pr__nfet_05v0_nvt   W=10 L=4 nf=1
+XMPB nb nb vbat vbat sky130_fd_pr__pfet_g5v0d10v5 W=2 L=4 nf=1
+XMPT tail nb vbat vbat sky130_fd_pr__pfet_g5v0d10v5 W=2 L=4 nf=1
+* par diferencial PMOS (n-well proprio ligado na cauda: sem efeito de corpo) + espelho NMOS
+XM1 d1 inp tail tail sky130_fd_pr__pfet_g5v0d10v5 W=4 L=2 nf=1
+XM2 o1 inn tail tail sky130_fd_pr__pfet_g5v0d10v5 W=4 L=2 nf=1
+XM3 d1 d1 0 0        sky130_fd_pr__nfet_g5v0d10v5 W=2 L=4 nf=1
+XM4 o1 d1 0 0        sky130_fd_pr__nfet_g5v0d10v5 W=2 L=4 nf=1
+* o1 sobe quando inp > inn (excursiona so ate ~1 V) -> 2o estagio fonte-comum NMOS com carga PMOS de bias
+XI1N o2 o1 0 0       sky130_fd_pr__nfet_g5v0d10v5 W=2 L=1 nf=1
+XI1P o2 nb vbat vbat sky130_fd_pr__pfet_g5v0d10v5 W=2 L=4 nf=1
+* saida: Schmitt trigger de 6 transistores (histerese local), com corrente
+* LIMITADA (~12 nA) por um PMOS de bias em cima e um nativo Vgs=0 embaixo.
+* Sem o limite, o crowbar perto do limiar (uA) empata com a corrente de carga
+* do boost e o sistema "estaciona" no limiar sem nunca disparar.
+XTS vtop nb vbat vbat sky130_fd_pr__pfet_g5v0d10v5 W=2 L=4 nf=1
+XTB vbot 0  0    0    sky130_fd_pr__nfet_05v0_nvt   W=10 L=4 nf=1
+XT1 px  o2 vtop vbat sky130_fd_pr__pfet_g5v0d10v5 W=1 L=1 nf=1
+XT2 out o2 px   vbat sky130_fd_pr__pfet_g5v0d10v5 W=1 L=1 nf=1
+XT3 px  out 0   vbat sky130_fd_pr__pfet_g5v0d10v5 W=1 L=1 nf=1
+XT4 nx  o2 vbot 0    sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XT5 out o2 nx   0    sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XT6 nx  out vbat 0   sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+.ends

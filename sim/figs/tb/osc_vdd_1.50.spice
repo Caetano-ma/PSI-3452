@@ -1,0 +1,20 @@
+* Oscilador com VDD = 1.50 V
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/oscilador.spice"
+VDD vdd 0 1.50
+X1 vdd clk oscilador
+XSW 0 clk 0 0 sky130_fd_pr__nfet_g5v0d10v5 W=20 L=0.5 nf=1 m=10
+.ic v(x1.r1)=0 v(x1.r2)=1.50 v(x1.r3)=0 v(x1.r4)=1.50 v(x1.r5)=0
+.control
+tran 5n 300u uic
+meas tran t1 when v(clk)=0.75 rise=4
+meas tran t2 when v(clk)=0.75 rise=8
+meas tran tf when v(clk)=0.75 fall=4
+meas tran q integ i(VDD) from=t1 to=t2
+let freq = 4/(t2-t1)
+let ton = tf-t1
+let pw = -q/(t2-t1)*1.50
+echo RESULT 1.50 $&freq $&ton $&pw
+quit
+.endc
+.end

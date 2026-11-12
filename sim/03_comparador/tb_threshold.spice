@@ -1,6 +1,6 @@
 * Testbench: Battery Threshold Control com divisor externo e histerese
 .lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
-.include "../blocos/threshold_ctrl.spice"
+.include "../blocos_v1/threshold_ctrl.spice"
 
 * ---- projeto do divisor (externo) ----
 .param VR=0.1335 S=20e6 VH=4.2 VHr=4.1 VL=3.0 VLr=3.1

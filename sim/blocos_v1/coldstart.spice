@@ -1,0 +1,44 @@
+* >>> VERSAO 1 (congelada para comparacao; a versao atual fica em sim/blocos/) <<<
+* Cold-Start: selecao de fonte (VBAT/TRIGGER) + regulador seguidor de fonte
+* Pinos: vbat trigger ctrl_low ctrl_high vdd        (VDD ~ 2.2 V)
+*
+*   CTRL_LOW  CTRL_HIGH   fonte     VDD
+*      0         0       TRIGGER   ligado   (1-1 power-on)
+*      0       VBAT      TRIGGER   ligado   (1-0 VBAT < T_D)
+*    VBAT        0          -      DESLIG.  (0-1 VBAT > T_U)
+*    VBAT      VBAT       VBAT     ligado   (0-0 normal)
+*
+* VS = no de alimentacao interno (fonte selecionada). Os inversores sao
+* alimentados por VS para funcionarem mesmo com a bateria morta.
+.subckt coldstart vbat trigger ctrl_low ctrl_high vdd
+* --- inversores de CTRL_LOW e CTRL_HIGH (alimentados por VS) ---
+XILN nlow  ctrl_low  0  0  sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XILP nlow  ctrl_low  vs vs sky130_fd_pr__pfet_g5v0d10v5 W=1 L=1 nf=1
+XIHN nhigh ctrl_high 0  0  sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XIHP nhigh ctrl_high vs vs sky130_fd_pr__pfet_g5v0d10v5 W=1 L=1 nf=1
+* --- chave VBAT -> VS: liga quando LOW inativo (nlow=0); n-well em VS ---
+*     (o diodo de corpo VBAT->VS tambem da a partida de VS a partir do VBAT)
+XSB vs nlow vbat vs        sky130_fd_pr__pfet_g5v0d10v5 W=10 L=0.5 nf=1
+* --- chave TRIGGER -> VS: liga quando LOW ativo (CTRL_LOW=0) ---
+*     diodo em serie: se o TRIGGER estiver ausente/aterrado, ele nao pode puxar
+*     VS (e, pelo diodo de corpo de XSB, a bateria) para baixo
+DTR trigger trd sky130_fd_pr__diode_pd2nw_05v5 area=100 pj=40
+XST vs ctrl_low trd vs     sky130_fd_pr__pfet_g5v0d10v5 W=10 L=0.5 nf=1
+* --- referencia do regulador: nA de um nativo com Vgs=0 (fonte no GND),
+*     espelhado por PMOS para uma pilha de 3 diodos NMOS (VG ~ 2.4 V) ---
+XMB nb 0 0 0               sky130_fd_pr__nfet_05v0_nvt  W=10 L=4 nf=1
+XPB nb nb vs vs            sky130_fd_pr__pfet_g5v0d10v5 W=2 L=4 nf=1
+XPM vg nb vs vs            sky130_fd_pr__pfet_g5v0d10v5 W=2 L=4 nf=1
+XD1 vg  vg  n1 0           sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XD2 n1  n1  n2 0           sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XD3 n2  n2  0  0           sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+* --- seguidor de fonte nativo (Vth~0): VDD = VG - Vgs ---
+XMF vs vg vdd 0            sky130_fd_pr__nfet_05v0_nvt  W=10 L=0.9 nf=1
+* --- desligamento: 2 NMOS em serie puxam VG ao GND so se
+*     HIGH ativo (nhigh alto) E LOW inativo (ctrl_low alto) ---
+XK1 vg ctrl_low kx 0       sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+XK2 kx nhigh    0  0       sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+* --- mesmo par, puxando o proprio VDD a 0 (senao ele flutua em ~0.7 V) ---
+XK3 vdd ctrl_low kz 0      sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+XK4 kz  nhigh    0  0      sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+.ends

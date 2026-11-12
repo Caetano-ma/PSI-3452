@@ -8,12 +8,12 @@ Este repositório contém a **prova de conceito em SPICE** de cada bloco, feita 
 
 | Pasta | Conteúdo |
 |---|---|
-| `1_cold_start/` | Seleção de fonte (VBAT/TRIGGER) e regulador de VDD ≈ 2,2 V |
-| `2_oscilador/` | Anel *current-starved* + gerador de pulso (f ≈ 100 kHz, t_on ≈ 530 ns) |
+| `1_cold_start/` | Seleção de fonte (VBAT/TRIGGER), regulador de VDD ≈ 1,8 V e detector de escuro |
+| `2_oscilador/` | Anel *current-starved* + gerador de pulso (f ≈ 53 kHz, t_on ≈ 750 ns) |
 | `3_referencia_de_tensao/` | Referência de 2 transistores (VREF ≈ 133 mV, ~14 pA) |
 | `4_comparador/` | Comparador contínuo de ~12 nA (OTA + 2º estágio + Schmitt trigger) |
 | `5_battery_threshold_control/` | Limites de 4,2/4,1 V e 3,0/3,1 V com divisor externo e histerese |
-| `6_boost/` | Boost em DCM com f e t_on fixos (emulação de resistor ≈ MPPT) |
+| `6_boost/` | Boost em DCM com f e t_on fixos (emulação de resistor ≈ MPPT), Schottky externo |
 | `integração/` | Os 4 blocos interligados e as simulações do sistema completo |
 | `sim/` | Netlists (`sim/blocos/`), testbenches e scripts que geram as figuras (`sim/figs/`) |
 
@@ -21,11 +21,13 @@ Cada pasta de módulo tem o esquemático (`esquematico.png`), os gráficos dos s
 
 O resumo das arquiteturas, os resultados e os problemas encontrados estão em [`sim/README.md`](sim/README.md).
 
+**Versão atual: v2**, com melhorias de saldo de energia: detector de escuro, Schottky externo, divisor de 100 MΩ, VDD de 1,8 V e oscilador de ~53 kHz. Com 8 h de luz cheia e 16 h de escuro, o saldo diário dobrou (de +23 para +46 µAh). A comparação está em `integração/balanco_de_energia_v1_v2.png`. A v1 continua disponível em `sim/blocos_v1/`.
+
 ## Como reproduzir
 
 1. Instale o ngspice (testado com a versão 47) e o PDK SKY130 (`sky130A`, bibliotecas `sky130_fd_pr`).
 2. Nos netlists, a linha `.lib` aponta para o caminho local do PDK; ajuste para o seu caminho.
-3. Rode os testbenches de `sim/figs/tb/` (cada pasta precisa do `.spiceinit`) para gerar os dados em `sim/figs/dados/`.
+3. Em `sim/figs/`, rode `python gera_tb_balanco.py` (cria os testbenches de balanço v1 × v2). Depois rode os testbenches de `sim/figs/tb/` (cada pasta precisa do `.spiceinit`) para gerar os dados em `sim/figs/dados/`.
 4. Em `sim/figs/`, rode `python graficos.py` e `python esq_<módulo>.py` (requer `numpy`, `matplotlib` e `schemdraw`).
 
 Os dados brutos das simulações (`*.txt`, ~150 MB) não estão no repositório, porque são regerados no passo 3.

@@ -1,0 +1,55 @@
+* >>> VERSAO 1 (congelada para comparacao; a versao atual fica em sim/blocos/) <<<
+* Oscilador: anel "current-starved" de 5 inversores (periodo) + detector de
+* borda (pulso de largura t_on) + buffers. Tudo alimentado por VDD (~2.2 V),
+* dispositivos de 5 V. Sem VDD, todos os nos (e CLK) ficam em 0 V.
+*
+* Inversor "starved": um NMOS nativo com Vgs=0 em serie limita a corrente de
+* descida (~160 nA). Isso fixa o atraso E limita a corrente de curto-circuito
+* (crowbar), que e o que domina o consumo com bordas lentas. Nao precisa de bias.
+*
+* Pinos: vdd clk   Param.: Cr (cap. do anel -> f), Cd (cap. do atraso -> t_on)
+* Valores atuais: f ~ 101 kHz, t_on ~ 534 ns, ~1.2 uW (VDD=2.2 V, tt, 27 C)
+.subckt inv a y vdd wn=1 wp=2 l=0.5
+XN y a 0 0     sky130_fd_pr__nfet_g5v0d10v5 W={wn} L={l} nf=1
+XP y a vdd vdd sky130_fd_pr__pfet_g5v0d10v5 W={wp} L={l} nf=1
+.ends
+.subckt invs a y vdd
+XP y a vdd vdd sky130_fd_pr__pfet_g5v0d10v5 W=1 L=1 nf=1
+XN y a m 0     sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XS m 0 0 0     sky130_fd_pr__nfet_05v0_nvt  W=10 L=0.9 nf=1
+.ends
+.subckt nand2 a b y vdd
+XPA y a vdd vdd sky130_fd_pr__pfet_g5v0d10v5 W=2 L=0.5 nf=1
+XPB y b vdd vdd sky130_fd_pr__pfet_g5v0d10v5 W=2 L=0.5 nf=1
+XNA y a m 0     sky130_fd_pr__nfet_g5v0d10v5 W=2 L=0.5 nf=1
+XNB m b 0 0     sky130_fd_pr__nfet_g5v0d10v5 W=2 L=0.5 nf=1
+.ends
+.subckt oscilador vdd clk Cr=0.26p Cd=0.03p
+* --- anel (define f) ---
+X1 r5 r1 vdd invs
+X2 r1 r2 vdd invs
+X3 r2 r3 vdd invs
+X4 r3 r4 vdd invs
+X5 r4 r5 vdd invs
+C1 r1 0 {Cr}
+C2 r2 0 {Cr}
+C3 r3 0 {Cr}
+C4 r4 0 {Cr}
+C5 r5 0 {Cr}
+* --- afiador de borda (starved, para nao gastar com a entrada lenta) ---
+XS1 r5 s1 vdd invs
+XS2 s1 s2 vdd inv wn=1 wp=2 l=0.5
+* --- atraso de 3 inversores starved (define t_on) ---
+XD1 s2 d1 vdd invs
+XD2 d1 d2 vdd invs
+XD3 d2 d3 vdd invs
+CD1 d1 0 {Cd}
+CD2 d2 0 {Cd}
+CD3 d3 0 {Cd}
+* --- pulso = s2 AND (s2 atrasado e invertido) ---
+XNA s2 d3 pn vdd nand2
+* --- buffers (3 inversores, crescentes) -> CLK alto durante o pulso ---
+XB1 pn b1 vdd inv wn=2 wp=4 l=0.5
+XB2 b1 b2 vdd inv wn=6 wp=12 l=0.5
+XB3 b2 clk vdd inv wn=20 wp=40 l=0.5
+.ends

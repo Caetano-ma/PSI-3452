@@ -1,6 +1,6 @@
 * Oscilador: frequencia, largura do pulso, consumo; carga = gate da chave do boost
 .lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
-.include "../blocos/oscilador.spice"
+.include "../blocos_v1/oscilador.spice"
 VDD vdd 0 2.2
 X1 vdd clk oscilador Cr=1p Cd=0.2p
 * carga: chave NMOS do boost (W=200u, L=0.5u)

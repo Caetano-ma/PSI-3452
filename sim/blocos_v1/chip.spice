@@ -1,0 +1,14 @@
+* >>> VERSAO 1 (congelada para comparacao; a versao atual fica em sim/blocos/) <<<
+* CI completo (diagrama de blocos): Cold-Start + Oscilador + Threshold Control + Boost
+* Pinos: vbat vstor lbst trigger t_r t_u t_uh t_d t_dh
+.include "coldstart.spice"
+.include "oscilador.spice"
+.include "threshold_ctrl.spice"
+.include "boost.spice"
+.subckt chip vbat vstor lbst trigger t_r t_u t_uh t_d t_dh
+Xcs  vbat trigger ctrl_low ctrl_high vdd coldstart
+Cvdd vdd 0 10p
+Xosc vdd clk oscilador
+Xth  vbat t_r t_u t_uh t_d t_dh ctrl_low ctrl_high thctrl
+Xbst lbst clk vstor boost
+.ends

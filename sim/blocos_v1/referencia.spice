@@ -1,0 +1,7 @@
+* >>> VERSAO 1 (congelada para comparacao; a versao atual fica em sim/blocos/) <<<
+* Referencia de tensao de 2 transistores (Seok/Blaauw 2012)
+* VREF ~ 133 mV, ~pA, ~independente de VBAT e temperatura (0-60 C: +-1 mV)
+.subckt ref2t vbat vref
+XM1 vbat 0    vref 0 sky130_fd_pr__nfet_05v0_nvt  W=1  L=4 nf=1
+XM2 vref vref 0    0 sky130_fd_pr__nfet_g5v0d10v5 W=10 L=1 nf=1
+.ends

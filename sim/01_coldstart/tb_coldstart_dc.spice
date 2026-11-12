@@ -1,6 +1,6 @@
 * Cold-Start: regulacao de linha e carga (estado 0-0, alimentado por VBAT)
 .lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
-.include "../blocos/coldstart.spice"
+.include "../blocos_v1/coldstart.spice"
 VBAT vbat 0 3.7
 VTRG trigger 0 0
 * estado 0-0: CTRL_LOW e CTRL_HIGH inativos (= VBAT)

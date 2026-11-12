@@ -1,0 +1,19 @@
+* >>> VERSAO 1 (congelada para comparacao; a versao atual fica em sim/blocos/) <<<
+* Battery Threshold Control: referencia + 2 comparadores + chaves de histerese
+* Pinos: vbat t_r t_u t_uh t_d t_dh ctrl_low ctrl_high
+.include "referencia.spice"
+.include "comparador.spice"
+.subckt thctrl vbat t_r t_u t_uh t_d t_dh ctrl_low ctrl_high
+* T_R: liga VBAT ao topo do divisor externo
+RTR vbat t_r 1
+Xref vbat vref ref2t
+* (pA carregando: 0.1 pF -> ~3 ms para estabilizar na partida)
+Cref vref 0 0.1p
+* CTRL_HIGH = 0 quando V(T_U) > VREF   (VBAT acima do limite superior)
+XcH vbat vref t_u ctrl_high comp
+* CTRL_LOW  = 0 quando V(T_D) < VREF   (VBAT abaixo do limite inferior)
+XcL vbat t_d vref ctrl_low comp
+* chaves de histerese: conduzem com a saida inativa (alta)
+XSH t_u  ctrl_high t_uh 0 sky130_fd_pr__nfet_g5v0d10v5 W=2 L=0.5 nf=1
+XSL t_dh ctrl_low  t_d  0 sky130_fd_pr__nfet_g5v0d10v5 W=2 L=0.5 nf=1
+.ends

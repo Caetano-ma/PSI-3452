@@ -1,8 +1,8 @@
 * Boost em malha completa: celula FV -> L externo -> boost -> bateria
 .lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
-.include "../../blocos/celula_fv.spice"
-.include "../../blocos/oscilador.spice"
-.include "../../blocos/boost.spice"
+.include "../../blocos_v1/celula_fv.spice"
+.include "../../blocos_v1/oscilador.spice"
+.include "../../blocos_v1/boost.spice"
 .param VB=3.7 IPH=25u
 * celula + capacitor de entrada (externo)
 Xcel vin_dc 0 celula_fv Iph={IPH}

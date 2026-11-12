@@ -1,0 +1,47 @@
+* Balanco de energia v2 - caso 'luz' (Iph = 50uA), bateria ideal 3,7 V (corrente positiva = carregando)
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/celula_fv.spice"
+.include "../../blocos/chip.spice"
+.option interp
+Xcel vin_dc 0 celula_fv Iph=50u
+Cin vin_dc 0 100n IC=0.6
+L1 vin_dc lx 220u IC=0
+RL lx lbst 5
+XDS lbst vstor schottky_ext
+Cout vstor 0 1u IC=3.7
+* bateria ideal; a carga liquida que entra nela e integrada pelo proprio
+* simulador (v(qbat) = integral de i(VB) dt, em coulombs) -> media exata,
+* sem depender da grade de saida
+Vmed vstor vbat 0
+VB vbat 0 3.7
+Bq 0 qbat I=i(VB)
+Cq qbat 0 1
+VT trigger 0 0
+.param VR=0.1335 S=100e6 VH=4.2 VHr=4.1 VL=3.0 VLr=3.1
+.param R3={S*VR/VH}  R23={S*VR/VL}  R2={R23-R3}  R1={S-R23}
+.param Rhd={R23*VLr/VR - S}
+.param Rhu={(VR/VHr*S - R3)/(1-VR/VHr)}
+R1  t_r  t_dh {R1}
+Rhd t_dh t_d  {Rhd}
+R2  t_d  t_u  {R2}
+Rhu t_u  t_uh {Rhu}
+R3  t_uh 0    {R3}
+* capacitores externos de filtro nos taps de alta impedancia
+Ctu t_u 0 10p
+Ctd t_d 0 10p
+.ic v(xic.xth.vref)=0.1335
+XIC vbat lbst vin_dc trigger t_r t_u t_uh t_d t_dh chip
+.control
+set wr_singlescale
+set wr_vecnames
+tran 1u 8m 0 20n uic
+meas tran q0 find v(qbat) at=4m
+meas tran q1 find v(qbat) at=8m
+let ibat = (q1 - q0)/(0.008 - 0.004)
+meas tran vin avg v(vin_dc) from=4m to=8m
+meas tran vdd avg v(xic.vdd) from=4m to=8m
+echo RESULT v2 luz $&ibat $&vin $&vdd
+wrdata ../dados/balanco_v2_luz.txt v(vin_dc) v(xic.vdd) v(qbat)
+quit
+.endc
+.end

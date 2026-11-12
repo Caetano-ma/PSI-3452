@@ -1,0 +1,12 @@
+* >>> VERSAO 1 (congelada para comparacao; a versao atual fica em sim/blocos/) <<<
+* Boost Charge Controller: chave NMOS + diodo (sem enable; para por falta de CLK)
+* Modo descontinuo (DCM) com f e t_on fixos (vindos do oscilador):
+*    R_in = 2 L / (t_on^2 f) * (1 - Vin/Vout)  -> a celula "ve" um resistor fixo ~ R_mpp
+*    I_pk = V_in t_on / L      -> "corrente de referencia fixa"
+* Pinos: lbst clk vstor   (VIN_DC so chega ao CI pelo indutor externo)
+.subckt boost lbst clk vstor
+* chave: NMOS 5 V, W total = 200 um
+XSW lbst clk 0 0 sky130_fd_pr__nfet_g5v0d10v5 W=20 L=0.5 nf=1 m=10
+* retificador: diodo p+/n-well (anodo LBST, catodo VSTOR) - bloqueia retorno da bateria
+DR lbst vstor sky130_fd_pr__diode_pd2nw_05v5 area=1e4 pj=400
+.ends

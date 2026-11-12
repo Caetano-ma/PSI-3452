@@ -7,7 +7,7 @@
 * celula + capacitor de entrada (externo)
 Xcel vin_dc 0 celula_fv Iph={IPH}
 Vmi vin_dc vin 0
-Cin vin 0 100n IC=0.68
+Cin vin 0 100n IC=0.60
 * indutor externo 220 uH (DCR 5 ohm)
 L1 vin lx 220u IC=0
 RL lx lbst 5
@@ -15,14 +15,16 @@ RL lx lbst 5
 Vbat vstor_m 0 {VB}
 Vmo vstor vstor_m 0
 Cout vstor 0 1u
-* oscilador alimentado por VDD ideal (o Cold-Start ja foi validado)
-VDD vdd 0 2.2
+* oscilador alimentado por VDD ideal (o Cold-Start ja foi validado);
+* posc = I(VDD) x VBAT: custo real na bateria (regulador linear)
+VDD vdd 0 1.82
 Xosc vdd clk oscilador
-Xbst lbst clk vstor boost
+Xbst lbst clk boost
+XDS lbst vstor schottky_ext
 .control
 set wr_singlescale
 set wr_vecnames
-save all @d.xbst.dr[id]
+save all @d.xds.d1[id]
 tran 10n 6m 3m uic
 meas tran vin_med avg v(vin)    from=4m to=6m
 let pin_t  = v(vin_dc)*i(Vmi)
@@ -31,11 +33,12 @@ meas tran pin    avg pin_t      from=4m to=6m
 meas tran pout   avg pout_t     from=4m to=6m
 meas tran ipk    max i(L1)      from=5m to=6m
 meas tran iosc   avg i(VDD)     from=4m to=6m
-let posc = -iosc*2.2
+meas tran vbm avg v(vstor) from=4m to=6m
+let posc = -iosc*vbm
 let eta_boost = pout/pin*100
 let eta_total = (pout-posc)/pin*100
 print pout posc eta_boost eta_total
-wrdata ../dados/boost_ondas.txt v(clk) v(lbst) i(L1) @d.xbst.dr[id] v(vin) v(vstor)
+wrdata ../dados/boost_ondas.txt v(clk) v(lbst) i(L1) @d.xds.d1[id] v(vin) v(vstor)
 quit
 .endc
 .end

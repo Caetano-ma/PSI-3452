@@ -1,0 +1,43 @@
+* Integracao C: luz -> escuro -> luz com bateria ideal de 3,7 V (detector de escuro)
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/celula_fv.spice"
+.include "../../blocos/chip.spice"
+.option interp
+Xcel vin_dc 0 celula_fv Iph=0
+* fotocorrente: 50 uA -> 0 (3 a 3.05 ms) -> 50 uA (8 a 8.05 ms)
+Iluz 0 vin_dc PWL(0 50u 3m 50u 3.05m 0 8m 0 8.05m 50u 12m 50u)
+Cin vin_dc 0 100n IC=0.60
+L1 vin_dc lx 220u IC=0
+RL lx lbst 5
+Vmed vstor vbatt 0
+VB vbatt 0 3.7
+* carga liquida na bateria integrada pelo simulador (positiva = carregando)
+Bq 0 qbat I=i(VB)
+Cq qbat 0 1
+Rv vstor vbat 0.1
+VT trigger 0 0
+.param VR=0.1335 S=100e6 VH=4.2 VHr=4.1 VL=3.0 VLr=3.1
+.param R3={S*VR/VH}  R23={S*VR/VL}  R2={R23-R3}  R1={S-R23}
+.param Rhd={R23*VLr/VR - S}
+.param Rhu={(VR/VHr*S - R3)/(1-VR/VHr)}
+R1  t_r  t_dh {R1}
+Rhd t_dh t_d  {Rhd}
+R2  t_d  t_u  {R2}
+Rhu t_u  t_uh {Rhu}
+R3  t_uh 0    {R3}
+* capacitores externos de filtro nos taps de alta impedancia (v2, divisor de 100 Mohm)
+Ctu t_u 0 10p
+Ctd t_d 0 10p
+.ic v(xic.xth.vref)=0.1335
+XDS lbst vbat_n schottky_ext
+Rbn vbat_n vstor 0.01
+XIC vbat lbst vin_dc trigger t_r t_u t_uh t_d t_dh chip
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+tran 0.1u 12m 0 20n uic
+wrdata ../dados/int_C.txt v(vbat) v(xic.vdd) v(xic.ctrl_low) v(xic.ctrl_high) v(vin_dc) v(xic.clk) i(L1) v(qbat)
+quit
+.endc
+.end

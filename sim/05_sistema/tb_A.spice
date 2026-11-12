@@ -1,7 +1,7 @@
 * Sistema completo. "Bateria" = capacitor de 0.1 uF para a tensao andar rapido.
 .lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
-.include "../blocos/celula_fv.spice"
-.include "../blocos/chip.spice"
+.include "../blocos_v1/celula_fv.spice"
+.include "../blocos_v1/chip.spice"
 .param V0=4.06 VTRG=0 TSIM=4m
 * --- externos: celula, Cin, indutor ---
 Xcel vin_dc 0 celula_fv Iph=50u

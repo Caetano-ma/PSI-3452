@@ -8,7 +8,7 @@ rot(d, (-3.5, 2.8), 'Referência + 2 comparadores contínuos + 2 NMOS de histere
 
 # ---------------- divisor externo ----------------
 ys = {'T_R': 0, 'T_DH': -3, 'T_D': -6, 'T_U': -9, 'T_UH': -12}
-vals = [('R1', '19,11 MΩ'), ('Rhd', '667 kΩ'), ('R2', '254 kΩ'), ('Rhu', '16,0 kΩ'), ('R3', '636 kΩ')]
+vals = [('R1', '95,55 MΩ'), ('Rhd', '3,33 MΩ'), ('R2', '1,27 MΩ'), ('Rhu', '80,1 kΩ'), ('R3', '3,18 MΩ')]
 nos = list(ys.values()) + [-15]
 for (nome, v), y0, y1 in zip(vals, nos[:-1], nos[1:]):
     d.add(elm.Resistor().at((0, y0)).down().to((0, y1)).label(f'{nome}\n{v}', loc='top', fontsize=FS - 1))
@@ -72,7 +72,7 @@ notas = [
     '    MHL abre → Rhd entra ACIMA de T_D → é preciso VBAT maior para liberar (3,0 V → 3,1 V).',
     '    MHH abre → Rhu entra ABAIXO de T_U → é preciso VBAT menor para liberar (4,2 V → 4,1 V).',
     '  • T_U fica ABAIXO de T_D no divisor, porque o limite superior (4,2 V) precisa de uma fração menor de VBAT.',
-    '  • Divisor total ≈ 20 MΩ (~210 nA em 4,2 V).  Comparadores: ver 4_comparador.  Referência: ver 3_referencia_de_tensao.',
+    '  • v2: divisor total ≈ 100 MΩ (~42 nA em 4,2 V; era 20 MΩ / ~210 nA).  Comparadores: ver 4_comparador.  Referência: ver 3_referencia_de_tensao.',
 ]
 for i, t in enumerate(notas):
     rot(d, (-3.5, -16.2 - 0.45 * i), t, halign='left', fs=8, cor='#333')

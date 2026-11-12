@@ -1,13 +1,15 @@
-* CI completo (diagrama de blocos): Cold-Start + Oscilador + Threshold Control + Boost
-* Pinos: vbat vstor lbst trigger t_r t_u t_uh t_d t_dh
+* CI completo (v2): Cold-Start + Oscilador + Threshold Control + Boost
+* Pinos: vbat lbst vin_dc trigger t_r t_u t_uh t_d t_dh
+* v2: VIN_DC entra no CI (detector de escuro do Cold-Start); o diodo do boost
+*     agora e um Schottky externo entre LBST e a bateria (subckt schottky_ext).
 .include "coldstart.spice"
 .include "oscilador.spice"
 .include "threshold_ctrl.spice"
 .include "boost.spice"
-.subckt chip vbat vstor lbst trigger t_r t_u t_uh t_d t_dh
-Xcs  vbat trigger ctrl_low ctrl_high vdd coldstart
+.subckt chip vbat lbst vin_dc trigger t_r t_u t_uh t_d t_dh
+Xcs  vbat trigger ctrl_low ctrl_high vin_dc vdd coldstart
 Cvdd vdd 0 10p
 Xosc vdd clk oscilador
 Xth  vbat t_r t_u t_uh t_d t_dh ctrl_low ctrl_high thctrl
-Xbst lbst clk vstor boost
+Xbst lbst clk boost
 .ends

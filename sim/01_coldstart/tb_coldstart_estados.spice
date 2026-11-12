@@ -1,6 +1,6 @@
 * Cold-Start: os 4 estados de CTRL_LOW/CTRL_HIGH (ativos em nivel baixo)
 .lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
-.include "../blocos/coldstart.spice"
+.include "../blocos_v1/coldstart.spice"
 VBAT vbat 0 3.7
 VTRG trigger 0 3.3
 VL ctrl_low 0 3.7

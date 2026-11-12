@@ -49,8 +49,8 @@ def cold_start():
     a = ax[1]
     a.plot(Cg['_x'] * uA, Cg['v(vdd)'], color=C[0], lw=2)
     a.set(xlabel='corrente de carga em VDD (µA)', ylabel='VDD (V)', title='Regulação de carga (VBAT = 3,7 V)')
-    a.axvline(1.2 / 2.2, color=C[3], ls='--', lw=1)
-    a.text(0.7, Cg['v(vdd)'].min() + 0.01, '← consumo do\n    oscilador (~0,5 µA)', fontsize=8, color=C[3])
+    a.axvline(0.123, color=C[3], ls='--', lw=1)
+    a.text(0.7, Cg['v(vdd)'].min() + 0.01, '← consumo do\n    oscilador (~0,12 µA)', fontsize=8, color=C[3])
     a = ax[2]
     a.plot(T['_x'], T['v(vdd)'], color=C[0], lw=2)
     a.axvspan(0, 60, color=C[2], alpha=0.08)
@@ -59,13 +59,15 @@ def cold_start():
 
     E = ler('cs_estados.txt'); t = E['_x'] * ms
     reg = [(0, 1, '0-0  normal\n(regula de VBAT)', C[2]), (1, 2, '1-0  VBAT < T_D\n(regula do TRIGGER)', C[3]),
-           (2, 3, '0-1  VBAT > T_U\n(VDD desligado)', C[1]), (3, 4, '1-1  power-on\n(regula do TRIGGER)', C[0])]
+           (2, 3, '0-1  VBAT > T_U\n(VDD desligado)', C[1]), (3, 4, '1-1  power-on\n(regula do TRIGGER)', C[0]),
+           (4, 5, '0-0 no ESCURO\n(VIN_DC = 0: VDD desl.)', C[5])]
     fig, ax = plt.subplots(3, 1, figsize=(11, 8.5), sharex=True)
     a = ax[0]
     a.plot(t, E['v(vbat)'], color='k', lw=1.6, label='VBAT')
     a.plot(t, E['v(ctrl_low)'], color=C[1], lw=1.4, ls='--', label='CTRL_LOW')
     a.plot(t, E['v(ctrl_high)'], color=C[4], lw=1.4, ls=':', label='CTRL_HIGH')
     a.axhline(3.3, color=C[3], lw=1, alpha=0.8, label='TRIGGER = 3,3 V')
+    a.plot(t, E['v(vin_dc)'], color=C[2], lw=1.2, ls='-.', label='VIN_DC (luz)')
     a.set_ylabel('V'); a.legend(loc='center right', ncol=2, fontsize=8); a.set_ylim(-0.3, 5)
     faixa_estados(a, reg)
     a = ax[1]
@@ -79,19 +81,36 @@ def cold_start():
     a.plot(t, E['itrg'] * uA, color=C[3], lw=1.4, ls='--', label='corrente do TRIGGER')
     a.set(ylabel='µA', xlabel='tempo (ms)'); a.legend(loc='center right', fontsize=8)
     a.set_ylim(-0.5, 4)
-    a.annotate('0,9 µA: fuga do seguidor nativo XMF\n(Vgs = 0) pelo pull-down de VDD\n→ ponto a melhorar', xy=(2.5, 0.93),
-               xytext=(2.15, 2.6), fontsize=8, color=C[1], arrowprops=dict(arrowstyle='->', color=C[1]))
+    m01 = (t > 2.4) & (t < 2.95); m00e = (t > 4.4) & (t < 4.95)
+    a.text(2.5, 2.4, f'{1e9*E["ibat"][m01].mean():.0f} nA', ha='center', fontsize=9, color=C[1])
+    a.text(4.5, 2.4, f'{1e9*E["ibat"][m00e].mean():.0f} nA', ha='center', fontsize=9, color=C[5])
     for (t0, t1, _, cor) in reg:
         a.axvspan(t0, t1, color=cor, alpha=0.10, lw=0)
-    fig.suptitle('Cold-Start: os 4 estados de CTRL_LOW / CTRL_HIGH (carga 1 MΩ ≈ oscilador)', fontweight='bold')
+    fig.suptitle('Cold-Start (v2): os 4 estados de CTRL_LOW / CTRL_HIGH + escuro (carga 15 MΩ ≈ oscilador)', fontweight='bold')
     salvar(fig, 'cs', 'estados_de_controle.png')
+
+    D = ler('cs_luz.txt')
+    fig, ax = plt.subplots(2, 1, figsize=(9, 6), sharex=True)
+    ax[0].plot(D['_x'], D['v(vdd)'], color=C[0], lw=2, label='VDD')
+    ax[0].plot(D['_x'], D['v(x1.dk)'], color=C[1], lw=1.4, ls='--', label='dk (alto = escuro)')
+    lim = D['_x'][np.argmax(D['v(vdd)'] > 0.9)]
+    ax[0].axvline(lim, color='#999', ls=':', lw=1)
+    ax[0].text(lim + 0.01, 2.6, f'limiar ≈ {lim:.2f} V', fontsize=9)
+    ax[0].set(ylabel='V', title='Detector de escuro (v2): VDD só liga com luz na célula (VBAT = 3,7 V, estado 0-0)')
+    ax[0].legend(fontsize=8, loc='center right')
+    ax[1].plot(D['_x'], D['ib'] * nA, color='k', lw=1.6)
+    ax[1].set(xlabel='VIN_DC (V)', ylabel='corrente de VBAT (nA)', yscale='log',
+              title='Consumo da bateria: dezenas de nA no escuro; com luz, o regulador alimenta a carga (0,15 µA)')
+    ax[1].axvspan(0.45, 0.68, color=C[2], alpha=0.08)
+    ax[1].text(0.565, ax[1].get_ylim()[0] * 1.5, 'faixa de operação com luz', ha='center', fontsize=8, color=C[2])
+    salvar(fig, 'cs', 'detector_de_escuro.png')
 
 
 # =================================================================== Oscilador
 def oscilador():
     print('Oscilador')
     O = ler('osc_ondas.txt'); t = O['_x'] * us
-    m = (t > 30) & (t < 52)
+    m = (t > 40) & (t < 100)
     fig, ax = plt.subplots(4, 1, figsize=(11, 9), sharex=True)
     for i in range(5):
         ax[0].plot(t[m], O[f'v(x1.r{i+1})'][m], lw=1.2, color=plt.cm.viridis(i / 5), label=f'r{i+1}')
@@ -107,20 +126,20 @@ def oscilador():
     q = np.concatenate([[0], np.cumsum(0.5 * (O['idd'][1:] + O['idd'][:-1]) * np.diff(O['_x']))])
     tu = np.arange(t[m][0] + 0.5, t[m][-1] - 0.5, 0.01)
     imov = (np.interp(tu + 0.5, t, q) - np.interp(tu - 0.5, t, q)) / 1e-6
-    c = cruzamentos(t, O['v(clk)'], 1.1, +1)
-    c = c[(c > 20) & (c < 70)]
+    c = cruzamentos(t, O['v(clk)'], 0.91, +1)
+    c = c[(c > 20) & (c < 140)]
     imed = (np.interp(c[-1], t, q) - np.interp(c[0], t, q)) / ((c[-1] - c[0]) * 1e-6)
     ax[3].plot(tu, imov * uA, color=C[5], lw=1.2)
     ax[3].axhline(imed * uA, color=C[1], ls='--', lw=1)
     ax[3].set(ylabel='µA', xlabel='tempo (µs)',
-              title=f'Corrente de VDD (média móvel de 1 µs; média por período {imed*uA:.2f} µA → {imed*2.2*uW:.2f} µW)')
+              title=f'Corrente de VDD (média móvel de 1 µs; média por período {imed*uA:.2f} µA → {imed*1.82*uW:.2f} µW)')
     salvar(fig, 'osc', 'formas_de_onda.png')
 
     # zoom num pulso
-    c = cruzamentos(t, O['v(clk)'], 1.1, +1)
-    t0 = c[c > 35][0]
-    m = (t > t0 - 0.6) & (t < t0 + 1.4)
-    f = cruzamentos(t[m], O['v(clk)'][m], 1.1, -1)[0]
+    c = cruzamentos(t, O['v(clk)'], 0.91, +1)
+    t0 = c[c > 40][0]
+    m = (t > t0 - 0.6) & (t < t0 + 1.8)
+    f = cruzamentos(t[m], O['v(clk)'][m], 0.91, -1)[0]
     fig, ax = plt.subplots(figsize=(10, 4.5))
     ax.plot(t[m] - t0, O['v(x1.s2)'][m], color=C[0], lw=1.4, label='s2')
     ax.plot(t[m] - t0, O['v(x1.d3)'][m], color=C[3], lw=1.4, ls='--', label='d3')
@@ -134,7 +153,7 @@ def oscilador():
     salvar(fig, 'osc', 'pulso_clk_zoom.png')
 
     # VDD cortado
-    m = (t > 55) & (t < 100)
+    m = (t > 100) & (t < 200)
     fig, ax = plt.subplots(2, 1, figsize=(10, 5.5), sharex=True)
     ax[0].plot(t[m], O['v(vdd)'][m], color='k', lw=1.6, label='VDD')
     ax[0].set(ylabel='V', title='Requisito: sem VDD, o CLK tem que ir a 0 V (chave do boost aberta)')
@@ -142,8 +161,8 @@ def oscilador():
     ax[1].plot(t[m], O['v(clk)'][m], color=C[1], lw=1.4, label='CLK')
     ax[1].plot(t[m], O['v(x1.r1)'][m], color=C[0], lw=0.8, alpha=0.7, label='r1')
     ax[1].set(ylabel='V', xlabel='tempo (µs)'); ax[1].legend(fontsize=8)
-    ax[1].axvspan(75, 100, color=C[2], alpha=0.1)
-    ax[1].text(87, 1.2, 'VDD = 0 → CLK fica em 0 V (chave aberta).\nNós internos podem reter alguma carga, mas sem\nalimentação nenhum inversor consegue levantar o CLK.', ha='center', fontsize=9, color=C[2])
+    ax[1].axvspan(155, 200, color=C[2], alpha=0.1)
+    ax[1].text(177, 1.2, 'VDD = 0 → CLK fica em 0 V (chave aberta).\nNós internos podem reter alguma carga, mas sem\nalimentação nenhum inversor consegue levantar o CLK.', ha='center', fontsize=9, color=C[2])
     salvar(fig, 'osc', 'corte_de_vdd.png')
 
     V = ler('osc_vdd.txt')
@@ -152,8 +171,8 @@ def oscilador():
     ax[1].plot(V['vdd'], V['ton'] * 1e9, 'o-', color=C[1]); ax[1].set(xlabel='VDD (V)', ylabel='ns', title='Largura do pulso t_on')
     ax[2].plot(V['vdd'], V['pw'] * uW, 'o-', color=C[2]); ax[2].set(xlabel='VDD (V)', ylabel='µW', title='Consumo (com a chave)')
     for a in ax:
-        a.axvline(2.2, color='#999', ls='--', lw=1)
-    fig.suptitle('Oscilador × tensão de alimentação (VDD nominal = 2,2 V)', fontweight='bold')
+        a.axvline(1.82, color='#999', ls='--', lw=1)
+    fig.suptitle('Oscilador (v2) × tensão de alimentação (VDD nominal = 1,82 V)', fontweight='bold')
     salvar(fig, 'osc', 'f_ton_consumo_vs_vdd.png')
 
 
@@ -296,11 +315,11 @@ def threshold():
 def boost():
     print('Boost')
     B = ler('boost_ondas.txt'); t = B['_x'] * us
-    il = B['i(L1)'] * 1e3; idio = B['@d.xbst.dr[id]'] * 1e3
+    il = B['i(L1)'] * 1e3; idio = B['@d.xds.d1[id]'] * 1e3
     c = cruzamentos(t, B['v(clk)'], 1.1, +1)
     t0 = c[c > t[0] + 5][0]
-    for janela, nome, tit in (((t0 - 2, t0 + 38), 'formas_de_onda_4_ciclos.png', '4 ciclos de chaveamento'),
-                              ((t0 - 0.3, t0 + 1.2), 'formas_de_onda_1_ciclo.png', 'um ciclo (zoom)')):
+    for janela, nome, tit in (((t0 - 2, t0 + 76), 'formas_de_onda_4_ciclos.png', '4 ciclos de chaveamento'),
+                              ((t0 - 0.3, t0 + 1.6), 'formas_de_onda_1_ciclo.png', 'um ciclo (zoom)')):
         m = (t > janela[0]) & (t < janela[1])
         fig, ax = plt.subplots(4, 1, figsize=(10, 8.5), sharex=True)
         ax[0].plot(t[m] - t0, B['v(clk)'][m], color=C[1], lw=1.5); ax[0].set(ylabel='V', title='CLK (gate da chave)')
@@ -309,7 +328,7 @@ def boost():
         ax[2].set(ylabel='mA', title='Corrente no indutor: sobe até I_pk (chave fechada) e desce pelo diodo até a bateria (I_diodo = I_L)')
         ax[3].plot(t[m] - t0, B['v(vin)'][m] * 1e3, color=C[3], lw=1.2)
         ax[3].set(ylabel='mV', xlabel='tempo (µs, relativo à subida do CLK)', title='V_in (ondulação no Cin)')
-        fig.suptitle(f'Boost — {tit}  (VBAT = 3,7 V, Iph = 50 µA)', fontweight='bold')
+        fig.suptitle(f'Boost (v2) — {tit}  (VBAT = 3,7 V, Iph = 50 µA, Schottky externo)', fontweight='bold')
         salvar(fig, 'boost', nome)
 
     # curva da celula + pontos de operacao
@@ -329,7 +348,7 @@ def boost():
         ax[1].plot(float(cs['vin']), float(cs['pin']) * uW, 's', color=cor, ms=7)
     ax[1].plot([], [], 's', color=C[1], label='operação: VBAT 3,0 / 3,7 / 4,2 V (luz cheia)')
     ax[1].plot([], [], 's', color=C[3], label='operação: VBAT 3,7 V (½ luz)')
-    R = 2 * 220e-6 / (534e-9 ** 2 * 101e3) * (1 - 0.6 / (3.7 + 0.77))   # (1 - Vin/Vout), Martins et al. 2017
+    R = 2 * 220e-6 / (751e-9 ** 2 * 52.7e3) * (1 - 0.6 / (3.7 + 0.37))   # (1 - Vin/Vout), Martins et al. 2017
     vv = np.linspace(0, 0.8, 50)
     ax[0].plot(vv, vv / R * uA, color='k', ls=':', lw=1.2, label=f'R_in = 2L/(t_on²f)·(1−V_in/V_out) ≈ {R/1e3:.1f} kΩ')
     NL = chr(10)
@@ -352,11 +371,11 @@ def boost():
     posc = np.array([float(c['posc']) for c in casos]) * uW
     ax.bar(x - 0.27, pin, 0.27, color=C[0], label='P extraída da célula')
     ax.bar(x, pout, 0.27, color=C[2], label='P entregue à bateria')
-    ax.bar(x + 0.27, posc, 0.27, color=C[3], label='P gasta pelo oscilador')
+    ax.bar(x + 0.27, posc, 0.27, color=C[3], label='P gasta pelo oscilador (tirada da bateria)')
     for i in range(len(casos)):
         ax.text(x[i], pout[i] + 1, f'η boost {100*pout[i]/pin[i]:.0f}%\nη total {100*(pout[i]-posc[i])/pin[i]:.0f}%',
                 ha='center', fontsize=8)
-    ax.set_xticks(x, nomes); ax.set(ylabel='µW', title='Balanço de potência do boost', ylim=(0, 38))
+    ax.set_xticks(x, nomes); ax.set(ylabel='µW', title='Balanço de potência do boost (v2)', ylim=(0, 38))
     ax.legend(fontsize=8, loc='upper right')
     salvar(fig, 'boost', 'eficiencia.png')
 
@@ -387,7 +406,7 @@ def integracao():
         fig.suptitle(titulo, fontweight='bold')
         salvar(fig, 'int', arquivo)
 
-    painel(A, t, titulo='Caso A: carga até o limite superior, parada e religamento (bateria = 47 nF, VBAT0 = 4,08 V)',
+    painel(A, t, titulo='Caso A (v2): carga até o limite superior, parada e religamento\n(bateria = 47 nF com carga de 2 MΩ, VBAT0 = 4,08 V)',
            arquivo='caso_A_limite_superior.png')
     dsp = cruzamentos(t, A['v(xic.ctrl_high)'] - vb / 2, 0, -1)
     lib = cruzamentos(t, A['v(xic.ctrl_high)'] - vb / 2, 0, +1)
@@ -416,8 +435,92 @@ def integracao():
                titulo=f'Caso B — zoom na troca de fonte (VBAT = {np.interp(tr[0], tb, B["v(vbat)"]):.3f} V)',
                arquivo='caso_B_zoom_troca_de_fonte.png', janela=(tr[0] - 0.1, tr[0] + 0.15))
 
+    # ---- caso C: luz -> escuro -> luz (bateria ideal)
+    Cc = ler('int_C.txt'); tc = Cc['_x'] * ms
+    m = np.ones_like(tc, bool)
+    fig, ax = plt.subplots(4, 1, figsize=(11, 8.4), sharex=True)
+    ax[0].plot(tc, Cc['v(vin_dc)'], color=C[3], lw=1.4)
+    ax[0].axvspan(3, 8, color='#333', alpha=0.10)
+    ax[0].text(5.5, 0.4, 'ESCURO', ha='center', fontsize=10, color='#333')
+    ax[0].set(ylabel='VIN_DC (V)')
+    ax[1].plot(tc, Cc['v(xic.clk)'], color=C[1], lw=0.5, alpha=0.6, label='CLK')
+    ax[1].plot(tc, Cc['v(xic.vdd)'], color=C[0], lw=1.8, label='VDD')
+    ax[1].set(ylabel='V'); ax[1].legend(fontsize=8, loc='center right')
+    ax[2].plot(tc, Cc['i(L1)'] * 1e3, color=C[4], lw=0.6)
+    ax[2].set(ylabel='I_L (mA)')
+    # corrente liquida na bateria, media movel de 0,2 ms (pela carga integrada no simulador)
+    q = Cc['v(qbat)']
+    tu = np.arange(0.2, 11.8, 0.01)
+    im = (np.interp((tu + 0.1) * 1e-3, Cc['_x'], q) - np.interp((tu - 0.1) * 1e-3, Cc['_x'], q)) / 0.2e-3
+    ax[3].plot(tu, im * uA, color='k', lw=1.4)
+    ax[3].axhline(0, color='#999', lw=0.8)
+    esc = (tu > 4.5) & (tu < 7.5); luz = (tu > 1) & (tu < 2.9)
+    ax[3].text(5.5, im[luz].mean() * uA * 0.5,
+               f'escuro: {im[esc].mean()*1e9:.0f} nA', ha='center', fontsize=9)
+    ax[3].text(1.9, im[luz].mean() * uA * 0.75, f'luz: +{im[luz].mean()*uA:.2f} µA', ha='center', fontsize=9)
+    ax[3].set(ylabel='I bateria (µA)', xlabel='tempo (ms)')
+    fig.suptitle('Caso C (v2): luz → escuro → luz com bateria de 3,7 V — no escuro o detector desliga VDD e o oscilador',
+                 fontweight='bold')
+    salvar(fig, 'int', 'caso_C_luz_escuro_luz.png')
+
+
+# =================================================================== Balanco v1 x v2
+def balanco():
+    print('Balanço de energia v1 x v2')
+    import glob, re
+    res = {}
+    for f in glob.glob(os.path.join(BASE, 'tb', 'balanco_*.spice.log')):
+        for l in open(f, errors='ignore'):
+            if l.startswith('RESULT'):
+                _, ver, caso, ib, vin, vdd = l.split()
+                res[(ver, caso)] = (float(ib), float(vin), float(vdd))
+    casos = [('luz', 'luz cheia\n(Iph 50 µA)'), ('meia', 'meia luz\n(25 µA)'),
+             ('pouca', 'pouca luz\n(10 µA)'), ('escuro', 'escuro')]
+    fig, ax = plt.subplots(1, 2, figsize=(13, 4.8), gridspec_kw={'width_ratios': [1.5, 1]})
+    x = np.arange(len(casos))
+    for k, (ver, cor) in enumerate((('v1', C[5]), ('v2', C[2]))):
+        vals = [res[(ver, c)][0] * uA for c, _ in casos]
+        b = ax[0].bar(x + (k - 0.5) * 0.38, vals, 0.38, color=cor, label=ver)
+        for xi, v in zip(x + (k - 0.5) * 0.38, vals):
+            ax[0].text(xi, v + (0.15 if v >= 0 else -0.45), f'{v:+.2f}', ha='center', fontsize=8)
+    ax[0].axhline(0, color='k', lw=0.8)
+    ax[0].set_xticks(x, [n for _, n in casos])
+    ax[0].set(ylabel='corrente líquida na bateria (µA)',
+              title='Corrente média que entra na bateria (3,7 V)\n(carga do boost − consumo do chip e do divisor)')
+    ax[0].legend()
+    # balanco diario: 8 h com luz + 16 h de escuro
+    dias = []
+    for luzc, nome in (('luz', 'dia com luz cheia'), ('meia', 'dia com meia luz')):
+        for ver in ('v1', 'v2'):
+            q = (res[(ver, luzc)][0] * 8 + res[(ver, 'escuro')][0] * 16) * 1e6
+            dias.append((f'{nome}\n{ver}', q, C[5] if ver == 'v1' else C[2]))
+    ax[1].bar(range(len(dias)), [d[1] for d in dias], color=[d[2] for d in dias])
+    for i, d in enumerate(dias):
+        ax[1].text(i, d[1] + 1, f'{d[1]:+.0f}', ha='center', fontsize=9)
+    ax[1].set_xticks(range(len(dias)), [d[0] for d in dias], fontsize=8)
+    ax[1].axhline(0, color='k', lw=0.8)
+    ax[1].set(ylabel='µAh por dia', title='Saldo diário (8 h de luz + 16 h de escuro)\nantes da autodescarga da bateria')
+    salvar(fig, 'int', 'balanco_de_energia_v1_v2.png')
+    with open(os.path.join(DADOS, 'balanco_resumo.txt'), 'w', encoding='utf-8') as f:
+        for (ver, caso), (ib, vin, vdd) in sorted(res.items()):
+            f.write(f'{ver} {caso} ibat={ib*1e6:+.3f}uA vin={vin:.3f}V vdd={vdd:.3f}V\n')
+        for d in dias:
+            f.write(f"{d[0].replace(chr(10), ' ')}: {d[1]:+.1f} uAh/dia\n")
+
+    # pouca luz: modo burst na v2
+    P2 = ler('balanco_v2_pouca.txt'); P1 = ler('balanco_v1_pouca.txt')
+    fig, ax = plt.subplots(2, 1, figsize=(11, 5.5), sharex=True)
+    for D, ver, cor in ((P1, 'v1', C[5]), (P2, 'v2', C[2])):
+        ax[0].plot(D['_x'] * ms, D['v(vin_dc)'], color=cor, lw=1.2, label=f'VIN_DC {ver}')
+        ax[1].plot(D['_x'] * ms, D['v(xic.vdd)'], color=cor, lw=1.2, label=f'VDD {ver}')
+    ax[0].axhline(0.36, color='#999', ls=':', lw=1)
+    ax[0].set(ylabel='V', title='Pouca luz (Iph = 10 µA): a v2 só liga o oscilador quando a célula sustenta VIN_DC (modo burst)')
+    ax[0].legend(fontsize=8); ax[1].legend(fontsize=8)
+    ax[1].set(ylabel='V', xlabel='tempo (ms)')
+    salvar(fig, 'int', 'pouca_luz_v1_v2.png')
+
 
 if __name__ == '__main__':
-    alvos = sys.argv[1:] or ['cold_start', 'oscilador', 'referencia', 'comparador', 'threshold', 'boost', 'integracao']
+    alvos = sys.argv[1:] or ['cold_start', 'oscilador', 'referencia', 'comparador', 'threshold', 'boost', 'integracao', 'balanco']
     for a in alvos:
         globals()[a]()
