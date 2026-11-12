@@ -1,0 +1,17 @@
+* Referencia 2T: VREF x VBAT e VREF x temperatura
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/referencia.spice"
+VBAT vbat 0 3.7
+X1 vbat vref ref2t
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc VBAT 0 4.5 0.01
+let ib = -i(VBAT)
+wrdata ../dados/ref_vbat.txt v(vref) ib
+dc temp -40 125 1
+wrdata ../dados/ref_temp.txt v(vref)
+quit
+.endc
+.end

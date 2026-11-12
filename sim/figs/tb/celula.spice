@@ -1,0 +1,17 @@
+* Curva I-V e P-V da celula (Iph = 50 uA e 25 uA)
+.include "../../blocos/celula_fv.spice"
+Xc vc 0 celula_fv Iph=50u
+Xd vd 0 celula_fv Iph=25u
+Vm vc 0 0
+Vd vd 0 0
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc Vm 0 0.85 0.002
+wrdata ../dados/celula_50u.txt i(Vm)
+dc Vd 0 0.85 0.002
+wrdata ../dados/celula_25u.txt i(Vd)
+quit
+.endc
+.end

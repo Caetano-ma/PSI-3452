@@ -1,0 +1,23 @@
+* Referencia de tensao de 2 transistores (Seok 2012), SKY130
+* M1 nativo (Vth~0): fonte de corrente de pA com gate no GND
+* M2 NMOS 5V ligado como diodo, em sublimiar
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+VBAT vbat 0 3.7
+XM1 vbat 0    vref 0 sky130_fd_pr__nfet_05v0_nvt   W=1 L=4 nf=1
+XM2 vref vref 0    0 sky130_fd_pr__nfet_g5v0d10v5  W=1 L=4 nf=1
+.control
+dc VBAT 1 4.5 0.05
+meas dc vref_25 find v(vref) at=2.5
+meas dc vref_42 find v(vref) at=4.2
+meas dc ibat find i(VBAT) at=3.7
+let lr = (vref_42 - vref_25)/1.7*1000
+print lr
+wrdata ref_vbat.txt v(vref)
+foreach t -20 27 85
+  set temp = $t
+  op
+  print v(vref)
+end
+quit
+.endc
+.end

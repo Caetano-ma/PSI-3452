@@ -1,0 +1,21 @@
+* Cold-Start: sequencia dos 4 estados (0-0, 1-0, 0-1, 1-1), TRIGGER = 3.3 V
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart.spice"
+VBAT vbat 0 PWL(0 3.7 1m 3.7 1.01m 2.8 2m 2.8 2.01m 4.3 3m 4.3 3.01m 0 4m 0)
+VL ctrl_low 0 PWL(0 3.7 1m 3.7 1.01m 0 2m 0 2.01m 4.3 3m 4.3 3.01m 0 4m 0)
+VH ctrl_high 0 PWL(0 3.7 1m 3.7 1.01m 2.8 2m 2.8 2.01m 0 3m 0 3.01m 0 4m 0)
+VTRG trigger 0 3.3
+X1 vbat trigger ctrl_low ctrl_high vdd coldstart
+RL vdd 0 1meg
+CL vdd 0 10p
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+tran 1u 4m
+let ibat = -i(VBAT)
+let itrg = -i(VTRG)
+wrdata ../dados/cs_estados.txt v(vbat) v(ctrl_low) v(ctrl_high) v(vdd) v(x1.vs) ibat itrg
+quit
+.endc
+.end

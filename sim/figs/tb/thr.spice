@@ -1,0 +1,38 @@
+* Testbench: Battery Threshold Control com divisor externo e histerese
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/threshold_ctrl.spice"
+
+* ---- projeto do divisor (externo) ----
+.param VR=0.1335 S=20e6 VH=4.2 VHr=4.1 VL=3.0 VLr=3.1
+.param R3={S*VR/VH}  R23={S*VR/VL}  R2={R23-R3}  R1={S-R23}
+.param Rhd={R23*VLr/VR - S}
+.param Rhu={(VR/VHr*S - R3)/(1-VR/VHr)}
+* T_R ─R1─ T_DH ─Rhd─ T_D ─R2─ T_U ─Rhu─ T_UH ─R3─ GND
+R1  t_r  t_dh {R1}
+Rhd t_dh t_d  {Rhd}
+R2  t_d  t_u  {R2}
+Rhu t_u  t_uh {Rhu}
+R3  t_uh 0    {R3}
+
+VBAT vbat 0 PWL(0 0  20m 4.5  40m 2.6  45m 0)
+X1 vbat t_r t_u t_uh t_d t_dh ctrl_low ctrl_high thctrl
+Bh hh 0 V = v(ctrl_high) - 0.5*v(vbat)
+Bl ll 0 V = v(ctrl_low)  - 0.5*v(vbat)
+
+.control
+set wr_singlescale
+set wr_vecnames
+tran 5u 45m
+* subida
+meas tran L_libera  find v(vbat) when v(ll)=0 rise=1
+meas tran H_dispara find v(vbat) when v(hh)=0 fall=1 td=1m
+* descida
+meas tran H_libera  find v(vbat) when v(hh)=0 rise=2
+meas tran L_dispara find v(vbat) when v(ll)=0 fall=1 td=21m
+meas tran Ibat avg i(VBAT) from=8m to=12m
+meas tran vref find v(x1.vref) at=10m
+let ib = -i(VBAT)
+wrdata ../dados/thr.txt v(vbat) v(ctrl_low) v(ctrl_high) v(x1.vref) v(t_d) v(t_u) ib
+quit
+.endc
+.end

@@ -1,0 +1,34 @@
+* Teste do PDK SKY130: Id x Vgs de NMOS/PMOS 5 V (oxido espesso) e NMOS 1,8 V
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.temp 27
+
+* NMOS 5 V  W=10u L=1u, VDS = 4.2 V
+VD5 d5 0 4.2
+VG  g  0 0
+XN5 d5 g 0 0 sky130_fd_pr__nfet_g5v0d10v5 W=10 L=1 nf=1
+
+* PMOS 5 V  W=10u L=1u, fonte em 4.2 V
+VS5 s5 0 4.2
+VGP gp 0 4.2
+XP5 0 gp s5 s5 sky130_fd_pr__pfet_g5v0d10v5 W=10 L=1 nf=1
+
+* NMOS 1.8 V  W=10u L=0.5u, VDS = 1.8 V
+VD1 d1 0 1.8
+XN1 d1 g 0 0 sky130_fd_pr__nfet_01v8 W=10 L=0.5 nf=1
+
+.control
+dc VG 0 1.8 0.01
+let id5 = -i(VD5)
+let id1 = -i(VD1)
+* corrente em ~sublimiar e em forte inversao
+meas dc id5_vg03 find id5 at=0.3
+meas dc id5_vg18 find id5 at=1.8
+meas dc id1_vg03 find id1 at=0.3
+meas dc id1_vg18 find id1 at=1.8
+wrdata nmos_idvg.txt id5 id1
+dc VGP 4.2 0 -0.01
+let idp = -i(VS5)
+meas dc idp_vsg18 find idp at=2.4
+quit
+.endc
+.end

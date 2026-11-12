@@ -1,0 +1,5 @@
+* Configuracao do ngspice para o PDK SKY130
+set ngbehavior=hsa
+set skywaterpdk
+set num_threads=4
+option noinit

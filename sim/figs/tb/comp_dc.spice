@@ -1,0 +1,20 @@
+* Comparador: transferencia DC subindo e descendo (VBAT=3.6 V, inn=133.5 mV)
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/comparador.spice"
+VBAT vbat 0 3.6
+VN inn 0 0.1335
+VP inp 0 0.12
+X1 vbat inp inn out comp
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc VP 0.125 0.142 0.0001
+let ib = -i(VBAT)
+wrdata ../dados/comp_dc_sobe.txt v(out) v(x1.o1) v(x1.o2) ib
+dc VP 0.142 0.125 -0.0001
+let ib = -i(VBAT)
+wrdata ../dados/comp_dc_desce.txt v(out) v(x1.o1) v(x1.o2) ib
+quit
+.endc
+.end

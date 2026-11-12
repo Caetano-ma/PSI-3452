@@ -1,0 +1,12 @@
+# Dados brutos de simulação (regeráveis rodando os testbenches em sim/)
+sim/**/*.txt
+sim/**/*.log
+# Rascunhos de varredura do oscilador
+sim/02_oscilador/var/
+sim/02_oscilador/var2/
+# Python
+__pycache__/
+*.pyc
+# PDFs de terceiros com direitos autorais: só os links ficam nos bibliografia.md
+*/bibliografia/*.pdf
+!2_oscilador/bibliografia/Dash_Mishra_Rout_2020_FUEE_current_starved_delay_block.pdf

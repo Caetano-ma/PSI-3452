@@ -1,0 +1,38 @@
+* Cold-Start: os 4 estados de CTRL_LOW/CTRL_HIGH (ativos em nivel baixo)
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../blocos/coldstart.spice"
+VBAT vbat 0 3.7
+VTRG trigger 0 3.3
+VL ctrl_low 0 3.7
+VH ctrl_high 0 3.7
+X1 vbat trigger ctrl_low ctrl_high vdd coldstart
+* carga ~ oscilador: 1 Mohm (~2 uA)
+RL vdd 0 1meg
+.control
+echo "estado 0-0: VBAT=3.7 (normal)            -> regula de VBAT"
+alter VBAT dc=3.7
+alter VL dc=3.7
+alter VH dc=3.7
+op
+print v(vdd) i(VBAT) i(VTRG)
+echo "estado 1-0: VBAT=2.8 (< T_D)             -> regula do TRIGGER"
+alter VBAT dc=2.8
+alter VL dc=0
+alter VH dc=2.8
+op
+print v(vdd) i(VBAT) i(VTRG)
+echo "estado 0-1: VBAT=4.3 (> T_U)             -> VDD desligado"
+alter VBAT dc=4.3
+alter VL dc=4.3
+alter VH dc=0
+op
+print v(vdd) i(VBAT) i(VTRG)
+echo "estado 1-1: VBAT=0 (sem energia, partida) -> regula do TRIGGER"
+alter VBAT dc=0
+alter VL dc=0
+alter VH dc=0
+op
+print v(vdd) i(VBAT) i(VTRG)
+quit
+.endc
+.end

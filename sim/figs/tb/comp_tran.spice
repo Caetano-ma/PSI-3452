@@ -1,0 +1,17 @@
+* Comparador: resposta a degraus de +-10 mV em torno de VREF
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/comparador.spice"
+VBAT vbat 0 3.6
+VN inn 0 0.1335
+VP inp 0 PWL(0 0.1235 100u 0.1235 100.1u 0.1435 400u 0.1435 400.1u 0.1235 700u 0.1235)
+X1 vbat inp inn out comp
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+tran 0.1u 700u
+let ib = -i(VBAT)
+wrdata ../dados/comp_tran.txt v(inp) v(inn) v(x1.o1) v(x1.o2) v(out) ib
+quit
+.endc
+.end

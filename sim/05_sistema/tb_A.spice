@@ -1,0 +1,32 @@
+* Sistema completo. "Bateria" = capacitor de 0.1 uF para a tensao andar rapido.
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../blocos/celula_fv.spice"
+.include "../blocos/chip.spice"
+.param V0=4.06 VTRG=0 TSIM=4m
+* --- externos: celula, Cin, indutor ---
+Xcel vin_dc 0 celula_fv Iph=50u
+Cin vin_dc 0 100n IC=0.65
+L1 vin_dc lx 220u IC=0
+RL lx lbst 5
+* --- "bateria": VSTOR ligado direto a VBAT ---
+Cbat vstor 0 0.1u IC={V0}
+Rv vstor vbat 0.1
+VT trigger 0 {VTRG}
+* --- divisor externo (mesmo do teste do comparador) ---
+.param VR=0.1335 S=20e6 VH=4.2 VHr=4.1 VL=3.0 VLr=3.1
+.param R3={S*VR/VH}  R23={S*VR/VL}  R2={R23-R3}  R1={S-R23}
+.param Rhd={R23*VLr/VR - S}
+.param Rhu={(VR/VHr*S - R3)/(1-VR/VHr)}
+R1  t_r  t_dh {R1}
+Rhd t_dh t_d  {Rhd}
+R2  t_d  t_u  {R2}
+Rhu t_u  t_uh {Rhu}
+R3  t_uh 0    {R3}
+.ic v(xic.xth.vref)=0.1335
+XIC vbat vstor lbst trigger t_r t_u t_uh t_d t_dh chip
+.control
+tran 20n 5m 0 uic
+wrdata sistema_A.txt v(vbat) v(xic.vdd) v(xic.ctrl_low) v(xic.ctrl_high) v(vin_dc) v(xic.clk)
+quit
+.endc
+.end

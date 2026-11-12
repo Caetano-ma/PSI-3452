@@ -1,0 +1,10 @@
+* Modelo simples de celula unica de a-Si (luz interna): Voc~0.8 V, Isc~50 uA
+* fonte de fotocorrente + diodo + R shunt + R serie
+.subckt celula_fv p n
+.param Iph=50u
+Iph n x {Iph}
+Dc  x n dcel
+Rsh x n 200k
+Rs  x p 50
+.model dcel d (is=2e-13 n=1.6)
+.ends
