@@ -1,6 +1,7 @@
 # Cold-Start (v2: seleção de fonte + regulador + detector de escuro)
 
 - `esquematico.png`: circuito em nível de transistor. Chaves do TRIGGER e do VBAT, referência de nA espelhada, pilha de 3 diodos, seguidor de fonte nativo, pull-downs do estado 0-1 e, novo na v2, o **detector de escuro** (XPD, XLD, XKD1, XKD2), destacado em azul.
+- `esquematico_blocos.png`: o mesmo circuito dividido em 7 blocos (inversores, seleção de fonte, fonte de nA + espelho, pilha de diodos, seguidor, desligamento e detector de escuro), ligados por nome de rede, com o tipo e o W/L de cada transistor. Serve de guia para redesenhar o esquemático no Virtuoso; gerado por `sim/figs/esq_coldstart_blocos.py`.
 - `regulacao_linha_carga_temperatura.png`: VDD em função de VBAT, da corrente de carga e da temperatura (≈ 1,8 V na v2; era 2,2 V).
 - `estados_de_controle.png`: os 4 estados de CTRL_LOW/CTRL_HIGH em sequência, mais um 5º trecho no escuro, com VS, VDD e as correntes puxadas de VBAT e do TRIGGER.
 - `detector_de_escuro.png`: VDD e o nó `dk` em função de VIN_DC. Sem luz (VIN_DC < ~0,36 V), VDD desliga e o consumo cai para dezenas de nA.
