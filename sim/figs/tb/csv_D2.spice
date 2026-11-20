@@ -1,0 +1,17 @@
+* Validacao bloco D: VG com corrente fixa (3, 10 e 30 nA) x temperatura
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+IVG 0 vg 4n
+XD vg cs_ref_pilha
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+foreach i 3n 10n 30n
+ alter IVG dc = $i
+ dc temp -20 85 1
+ wrdata ../dados/csv_D_temp_{$i}.txt v(vg)
+end
+quit
+.endc
+.end

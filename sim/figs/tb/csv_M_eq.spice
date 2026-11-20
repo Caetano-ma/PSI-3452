@@ -1,0 +1,23 @@
+* Equivalencia: coldstart.spice (plano) x coldstart_blocos.spice (hierarquico)
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart.spice"
+.include "../../blocos/coldstart_blocos.spice"
+VBAT vbat 0 3.7
+VTRG trigger 0 0
+VIN vin_dc 0 0.6
+BL ctrl_low 0 V = v(vbat)
+BH ctrl_high 0 V = v(vbat)
+X1 vbat trigger ctrl_low ctrl_high vin_dc vdd1 coldstart
+X2 vbat trigger ctrl_low ctrl_high vin_dc vdd2 cold_start
+IL1 vdd1 0 0.15u
+IL2 vdd2 0 0.15u
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc VBAT 0 4.5 0.02
+let dif = v(vdd1) - v(vdd2)
+wrdata ../dados/csv_M_eq.txt v(vdd1) v(vdd2) dif
+quit
+.endc
+.end

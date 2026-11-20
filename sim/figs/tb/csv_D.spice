@@ -1,0 +1,15 @@
+* Validacao bloco D (cs_ref_pilha): curva I-V da pilha e VG x temperatura com 4 nA
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VVG vg 0 0
+XD vg cs_ref_pilha
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc VVG 0 3.2 0.005
+let ig = -i(VVG)
+wrdata ../dados/csv_D_iv.txt ig
+quit
+.endc
+.end

@@ -1,0 +1,25 @@
+* Validacao bloco E (cs_seguidor): VDD x VG, regulacao de carga, fuga com VG = 0
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VS vs 0 3.7
+VVG vg 0 2.25
+ILD vdd 0 0.15u
+XE vs vg vdd cs_seguidor
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc VVG 0 3.2 0.005
+wrdata ../dados/csv_E_vg.txt v(vdd)
+alter ILD dc = 0.01u
+dc VVG 0 3.2 0.005
+wrdata ../dados/csv_E_vg_10n.txt v(vdd)
+alter ILD dc = 2u
+dc VVG 0 3.2 0.005
+wrdata ../dados/csv_E_vg_2u.txt v(vdd)
+alter ILD dc = 0.15u
+dc ILD 0.01u 20u 0.01u
+wrdata ../dados/csv_E_carga.txt v(vdd)
+quit
+.endc
+.end

@@ -102,7 +102,7 @@ B.txt(6.5, -5.2, 'n-well das duas chaves = VS', ha='center')
 
 # =========================================================== C: fonte de nA + espelho
 C = Bloco(26.0, 0, 12.0, 7.0, 'C. Fonte de nA + espelho PMOS',
-          'XPB, XPM e XPD juntos no layout (mesmo L, mesma orientação)')
+          'XPB, XPM e XPD juntos no layout (mesma orientação; XPD tem L = 8)')
 C.rede(0.6, -1.6, 'VS', ha='left')
 C.w((1.1, -1.6), (10.0, -1.6))
 for x in (2.5, 6.0, 10.0):
@@ -120,15 +120,15 @@ C.N(2.5, -3.9, gate='left', nome='XMB', wl='nativo 10/4', nativo=True)
 C.w((1.13, -4.65), (1.13, -5.6), (2.5, -5.6))
 C.w((2.5, -5.4), (2.5, -5.6))
 C.gnd(2.5, -5.6)
-C.txt(3.1, -5.7, 'Vgs = 0  →  ~4 nA')
+C.txt(3.1, -5.7, 'Vgs = 0  →  ~10 nA')
 C.w((8.63, -2.35), (8.2, -2.35))
 C.rede(8.1, -2.35, 'nb', ha='right')
 C.w((6.0, -3.1), (6.0, -4.3))
 C.rede(6.0, -4.4, 'VG', va='top')
-C.txt(6.0, -4.95, '~4 nA para a pilha', ha='center')
+C.txt(6.0, -4.95, '~10 nA para a pilha', ha='center')
 C.w((10.0, -3.1), (10.0, -4.3))
 C.rede(10.0, -4.4, 'dk', va='top')
-C.txt(10.0, -4.95, '~1 nA para o detector', ha='center')
+C.txt(10.0, -4.95, '~6 nA para o detector', ha='center')
 
 # =========================================================== D: pilha de diodos
 D = Bloco(0, -7.5, 6.5, 8.0, 'D. Pilha de diodos', 'define VG ≈ 2,27 V')
@@ -154,7 +154,7 @@ E.pino(5.6, -4.3, 'VDD', va='bottom')
 E.txt(0.3, -5.6, 'saída do bloco → oscilador', fs=8, cor='#111')
 E.txt(0.3, -6.1, 'Cvdd = 10 pF de VDD ao GND fica FORA')
 E.txt(0.3, -6.5, 'do Cold-Start (nível do chip / testbench)')
-E.txt(0.3, -7.2, 'L = 4 limita a fuga com Vgs = 0 a ~30 nA')
+E.txt(0.3, -7.2, 'L = 4 limita a fuga com Vgs = 0 a ~10 nA')
 
 # =========================================================== F: desligamento
 F = Bloco(15.0, -7.5, 11.5, 8.0, 'F. Desligamento (estado 0-1)', 'zera VG e VDD se CTRL_LOW = 1 e CTRL_HIGH = 0')
@@ -179,7 +179,7 @@ G.w((2.03, -2.75), (1.4, -2.75))
 G.pino(1.4, -2.75, 'VIN_DC', ha='right', va='top')
 G.gnd(3.4, -3.5)
 G.txt(0.3, -5.6, 'liga com VIN_DC > ~0,36 V e vence', fs=7)
-G.txt(0.3, -6.0, 'o ~1 nA que XPD injeta em dk', fs=7)
+G.txt(0.3, -6.0, 'os ~6 nA que XPD injeta em dk', fs=7)
 for x, topo, nome in ((7.4, 'VG', 'XKD1'), (9.9, 'VDD', 'XKD2')):
     G.rede(x, -1.3, topo, va='bottom')
     G.w((x, -1.35), (x, -2.0))

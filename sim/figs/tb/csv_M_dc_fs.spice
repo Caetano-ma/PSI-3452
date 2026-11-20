@@ -1,0 +1,37 @@
+* Validacao do modulo cold_start (hierarquico), canto fs: linha, carga, temperatura, luz, TRIGGER
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" fs
+.include "../../blocos/coldstart_blocos.spice"
+VBAT vbat 0 3.7
+VTRG trigger 0 0
+VIN vin_dc 0 0.6
+BL ctrl_low 0 V = (v(modo) > 0.5) ? v(vbat) : 0
+BH ctrl_high 0 V = (v(modo) > 0.5) ? v(vbat) : 0
+VMODO modo 0 1
+X1 vbat trigger ctrl_low ctrl_high vin_dc vdd cold_start
+ILOAD vdd 0 0.15u
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+* estado 0-0 (normal): VDD x VBAT
+dc VBAT 0 4.5 0.02
+let ib = -i(VBAT)
+wrdata ../dados/csv_M_linha_fs.txt v(vdd) ib v(x1.vs) v(x1.vg)
+dc ILOAD 0.01u 20u 0.01u
+wrdata ../dados/csv_M_carga_fs.txt v(vdd)
+dc temp -20 85 1
+let ib = -i(VBAT)
+wrdata ../dados/csv_M_temp_fs.txt v(vdd) v(x1.vg) ib
+dc VIN 0 0.8 0.002
+let ib = -i(VBAT)
+wrdata ../dados/csv_M_luz_fs.txt v(vdd) v(x1.dk) ib
+* estado 1-1 (power-on) com bateria morta: VDD x TRIGGER
+alter VIN dc = 0.6
+alter VMODO dc = 0
+alter VBAT dc = 0
+dc VTRG 0 4.5 0.01
+let it = -i(VTRG)
+wrdata ../dados/csv_M_trg_fs.txt v(vdd) it v(x1.vs) v(x1.vg)
+quit
+.endc
+.end

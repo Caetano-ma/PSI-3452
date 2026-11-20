@@ -1,0 +1,22 @@
+* Validacao bloco F (cs_desliga): corrente puxada de VG e VDD x nhigh, para CTRL_LOW = 0 e 3,7 V
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VVG vg 0 2.25
+VDD vdd 0 1.8
+VCL ctrl_low 0 0
+VNH nhigh 0 0
+XF vg vdd ctrl_low nhigh cs_desliga
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+foreach c 0 3.7
+ alter VCL dc = $c
+ dc VNH 0 3.7 0.005
+ let ikg = -i(VVG)
+ let ikd = -i(VDD)
+ wrdata ../dados/csv_F_cl{$c}.txt ikg ikd
+end
+quit
+.endc
+.end

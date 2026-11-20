@@ -1,0 +1,75 @@
+* Cold-Start (v2) HIERARQUICO: um subcircuito por bloco, igual ao
+* esquematico_blocos.png e a hierarquia sugerida para o Virtuoso.
+* Mesmos transistores de coldstart.spice (versao "plana"); os dois sao
+* equivalentes (conferido em sim/figs/tb/csv_equivalencia.spice).
+*
+*   A cs_inv_ctrl    vs ctrl_low ctrl_high nlow nhigh
+*   B cs_sel_fonte   trigger vbat ctrl_low nlow vs
+*   C cs_bias_na     vs vg dk                    (nb e interno)
+*   D cs_ref_pilha   vg
+*   E cs_seguidor    vs vg vdd
+*   F cs_desliga     vg vdd ctrl_low nhigh
+*   G cs_det_escuro  vin_dc dk vg vdd
+*   topo: cold_start vbat trigger ctrl_low ctrl_high vin_dc vdd
+* GND = no 0 em todos os blocos.
+
+* ---------------------------------------------------------------- A
+.subckt cs_inv_ctrl vs ctrl_low ctrl_high nlow nhigh
+XILN nlow  ctrl_low  0  0  sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XILP nlow  ctrl_low  vs vs sky130_fd_pr__pfet_g5v0d10v5 W=1 L=1 nf=1
+XIHN nhigh ctrl_high 0  0  sky130_fd_pr__nfet_g5v0d10v5 W=1 L=1 nf=1
+XIHP nhigh ctrl_high vs vs sky130_fd_pr__pfet_g5v0d10v5 W=1 L=1 nf=1
+.ends
+
+* ---------------------------------------------------------------- B
+.subckt cs_sel_fonte trigger vbat ctrl_low nlow vs
+XSB vs nlow vbat vs        sky130_fd_pr__pfet_g5v0d10v5 W=10 L=0.5 nf=1
+DTR trigger trd sky130_fd_pr__diode_pd2nw_05v5 area=100 pj=40
+XST vs ctrl_low trd vs     sky130_fd_pr__pfet_g5v0d10v5 W=10 L=0.5 nf=1
+.ends
+
+* ---------------------------------------------------------------- C
+.subckt cs_bias_na vs vg dk
+XMB nb 0 0 0               sky130_fd_pr__nfet_05v0_nvt  W=10 L=4 nf=1
+XPB nb nb vs vs            sky130_fd_pr__pfet_g5v0d10v5 W=2 L=4 nf=1
+XPM vg nb vs vs            sky130_fd_pr__pfet_g5v0d10v5 W=2 L=4 nf=1
+XPD dk nb vs vs            sky130_fd_pr__pfet_g5v0d10v5 W=1 L=8 nf=1
+.ends
+
+* ---------------------------------------------------------------- D
+.subckt cs_ref_pilha vg
+XD1 vg  vg  n1 0           sky130_fd_pr__nfet_g5v0d10v5 W=6 L=1 nf=1
+XD2 n1  n1  n2 0           sky130_fd_pr__nfet_g5v0d10v5 W=6 L=1 nf=1
+XD3 n2  n2  0  0           sky130_fd_pr__nfet_g5v0d10v5 W=6 L=1 nf=1
+.ends
+
+* ---------------------------------------------------------------- E
+.subckt cs_seguidor vs vg vdd
+XMF vs vg vdd 0            sky130_fd_pr__nfet_05v0_nvt  W=10 L=4 nf=1
+.ends
+
+* ---------------------------------------------------------------- F
+.subckt cs_desliga vg vdd ctrl_low nhigh
+XK1 vg ctrl_low kx 0       sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+XK2 kx nhigh    0  0       sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+XK3 vdd ctrl_low kz 0      sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+XK4 kz  nhigh    0  0      sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+.ends
+
+* ---------------------------------------------------------------- G
+.subckt cs_det_escuro vin_dc dk vg vdd
+XLD dk vin_dc 0 0          sky130_fd_pr__nfet_g5v0d10v5 W=40 L=0.5 nf=1
+XKD1 vg dk 0 0             sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+XKD2 vdd dk 0 0            sky130_fd_pr__nfet_g5v0d10v5 W=1 L=0.5 nf=1
+.ends
+
+* ---------------------------------------------------------------- topo
+.subckt cold_start vbat trigger ctrl_low ctrl_high vin_dc vdd
+XA vs ctrl_low ctrl_high nlow nhigh   cs_inv_ctrl
+XB trigger vbat ctrl_low nlow vs      cs_sel_fonte
+XC vs vg dk                           cs_bias_na
+XD vg                                 cs_ref_pilha
+XE vs vg vdd                          cs_seguidor
+XF vg vdd ctrl_low nhigh              cs_desliga
+XG vin_dc dk vg vdd                   cs_det_escuro
+.ends

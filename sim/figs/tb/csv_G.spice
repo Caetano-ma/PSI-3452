@@ -1,0 +1,23 @@
+* Validacao bloco G (cs_det_escuro) isolado: I(XLD) x VIN_DC e corrente de desligamento x dk
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VIN vin_dc 0 0
+VDK dk 0 0.5
+VVG vg 0 2.25
+VDD vdd 0 1.8
+XG vin_dc dk vg vdd cs_det_escuro
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc VIN 0 0.8 0.002
+let ild = i(VDK)
+wrdata ../dados/csv_G_ild.txt ild
+alter VIN dc = 0
+dc VDK 0 3.7 0.005
+let ikg = -i(VVG)
+let ikd = -i(VDD)
+wrdata ../dados/csv_G_kill.txt ikg ikd
+quit
+.endc
+.end

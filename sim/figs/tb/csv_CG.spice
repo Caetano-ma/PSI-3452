@@ -1,0 +1,22 @@
+* Validacao C + G juntos: no dk x VIN_DC (o limiar depende do nA de XPD)
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VS vs 0 3.7
+VVG vg 0 2.25
+VDD vdd 0 1.8
+VIN vin_dc 0 0
+XC vs vg dk cs_bias_na
+XG vin_dc dk vg vdd cs_det_escuro
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+foreach t -20 27 85
+ option temp = $t
+ dc VIN 0 0.8 0.002
+ let ikd = -i(VDD)
+ wrdata ../dados/csv_CG_{$t}.txt v(dk) ikd
+end
+quit
+.endc
+.end

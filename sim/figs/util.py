@@ -14,6 +14,7 @@ RAIZ = os.path.abspath(os.path.join(BASE, '..', '..'))
 
 PASTAS = {
     'cs':    '1_cold_start',
+    'csv':   '1_cold_start/validacao',
     'osc':   '2_oscilador',
     'ref':   '3_referencia_de_tensao',
     'comp':  '4_comparador',

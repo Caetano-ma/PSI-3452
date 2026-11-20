@@ -1,0 +1,20 @@
+* Validacao bloco E: fuga do seguidor desligado (VG = 0, VDD = 0) x VS e x temperatura
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VS vs 0 3.7
+VVG vg 0 0
+VDD vdd 0 0
+XE vs vg vdd cs_seguidor
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc VS 0 4.5 0.01
+let il = -i(VS)
+wrdata ../dados/csv_E_fuga.txt il
+dc temp -20 85 1
+let il = -i(VS)
+wrdata ../dados/csv_E_fuga_temp.txt il
+quit
+.endc
+.end

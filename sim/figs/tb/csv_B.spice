@@ -1,0 +1,39 @@
+* Validacao bloco B (cs_sel_fonte): VS em funcao de VBAT e do TRIGGER
+* nlow vem do bloco A; aqui e imposto por fonte ideal (nlow = 0 ou nlow = VS)
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VBAT vbat 0 3.7
+VTRG trigger 0 0
+BCL ctrl_low 0 V = (v(ctrl_sel) > 0.5) ? v(vbat) : 0
+VSEL ctrl_sel 0 1
+ENL nlow 0 vs 0 1
+RLD vs 0 15meg
+XB trigger vbat ctrl_low nlow vs cs_sel_fonte
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+* caso 1: LOW inativo (CTRL_LOW = VBAT, nlow = 0), TRIGGER ausente (0 V)
+alter ENL gain = 0
+alter VTRG dc = 0
+dc VBAT 0 4.5 0.01
+let ib = -i(VBAT)
+let it = -i(VTRG)
+wrdata ../dados/csv_B1.txt v(vs) ib it
+* caso 2: LOW ativo (CTRL_LOW = 0, nlow = VS), TRIGGER = 3,3 V, varre VBAT
+alter ENL gain = 1
+alter VSEL dc = 0
+alter VTRG dc = 3.3
+dc VBAT 0 4.5 0.01
+let ib = -i(VBAT)
+let it = -i(VTRG)
+wrdata ../dados/csv_B2.txt v(vs) ib it
+* caso 3: bateria morta (VBAT = 0), LOW ativo, varre TRIGGER
+alter VBAT dc = 0
+dc VTRG 0 4.5 0.01
+let ib = -i(VBAT)
+let it = -i(VTRG)
+wrdata ../dados/csv_B3.txt v(vs) ib it
+quit
+.endc
+.end

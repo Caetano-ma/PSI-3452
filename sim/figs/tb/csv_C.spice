@@ -1,0 +1,30 @@
+* Validacao bloco C (cs_bias_na): correntes de saida (VG e dk) x VS (VG fixo em 1 V), x tensao e x temperatura
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VS vs 0 3.7
+VVG vg 0 1.0
+VDK dk 0 0.3
+XC vs vg dk cs_bias_na
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+dc VS 0 4.5 0.01
+let ipm = i(VVG)
+let ipd = i(VDK)
+let is = -i(VS)
+wrdata ../dados/csv_C_vs.txt ipm ipd is
+dc VVG 0 3.7 0.01
+let ipm = i(VVG)
+wrdata ../dados/csv_C_vg.txt ipm
+dc VDK 0 3.7 0.01
+let ipd = i(VDK)
+wrdata ../dados/csv_C_dk.txt ipd
+dc temp -20 85 1
+let ipm = i(VVG)
+let ipd = i(VDK)
+let is = -i(VS)
+wrdata ../dados/csv_C_temp.txt ipm ipd is
+quit
+.endc
+.end

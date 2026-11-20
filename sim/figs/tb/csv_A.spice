@@ -1,0 +1,19 @@
+* Validacao bloco A (cs_inv_ctrl): curva de transferencia e corrente de VS
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VS vs 0 3.7
+VC ctrl 0 0
+XA vs ctrl ctrl nlow nhigh cs_inv_ctrl
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+foreach v 2.0 3.3 3.7 4.3
+ alter VS dc = $v
+ dc VC 0 4.5 0.005
+ let is = -i(VS)
+ wrdata ../dados/csv_A_{$v}.txt v(nlow) v(nhigh) is
+end
+quit
+.endc
+.end

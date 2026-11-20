@@ -1,0 +1,26 @@
+* Validacao do modulo: transitorios de partida
+*  (1) bateria morta: TRIGGER sobe 0 -> 3,3 V em 100 us (estado 1-1)
+*  (2) estado 0-0, VBAT = 3,7 V: escuro -> luz (1 ms) -> escuro (3 ms)
+.lib "C:/Users/caean/EDA/pdk/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
+.include "../../blocos/coldstart_blocos.spice"
+VTRG trigger 0 PWL(0 0 0.1m 0 0.2m 3.3)
+X1 0 trigger 0 0 vin1 vdd1 cold_start
+VIN1 vin1 0 0.6
+RL1 vdd1 0 15meg
+CL1 vdd1 0 10p
+VBAT vbat 0 3.7
+VIN2 vin2 0 PWL(0 0 1m 0 1.01m 0.6 3m 0.6 3.01m 0)
+X2 vbat 0 vbat vbat vin2 vdd2 cold_start
+RL2 vdd2 0 15meg
+CL2 vdd2 0 10p
+.control
+set wr_singlescale
+set wr_vecnames
+option numdgt=7
+tran 0.5u 5m
+let it = -i(VTRG)
+let ib = -i(VBAT)
+wrdata ../dados/csv_M_partida.txt v(trigger) v(x1.vs) v(x1.vg) v(vdd1) it v(vin2) v(x2.dk) v(x2.vg) v(vdd2) ib
+quit
+.endc
+.end
